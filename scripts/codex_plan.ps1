@@ -27,6 +27,34 @@ function FileAppend([string]$path, [string]$text) {
   Add-Content -Path $path -Value $text
 }
 
+function Get-JsonFile([string]$path) {
+  if (!(Test-Path $path)) { return $null }
+  try {
+    return (Get-Content -Path $path -Raw | ConvertFrom-Json)
+  } catch {
+    throw "Failed to parse JSON: $path"
+  }
+}
+
+function Require-NodeTestScript {
+  # QUALITY ENFORCEMENT v1:
+  # If package.json exists, it MUST define scripts.test (non-empty).
+  $pkgPath = "package.json"
+  if (!(Test-Path $pkgPath)) { return }
+
+  $pkg = Get-JsonFile $pkgPath
+  if ($null -eq $pkg) {
+    throw "QUALITY GATE FAILED: package.json exists but could not be read."
+  }
+
+  $hasScripts = ($null -ne $pkg.scripts)
+  $hasTest = $hasScripts -and ($null -ne $pkg.scripts.test) -and ($pkg.scripts.test.ToString().Trim().Length -gt 0)
+
+  if (-not $hasTest) {
+    throw "QUALITY GATE FAILED: package.json found but scripts.test is missing. Add a `"test`" script to package.json before shipping."
+  }
+}
+
 # Ensure in git repo
 Exec "git rev-parse --is-inside-work-tree"
 
@@ -63,6 +91,7 @@ if ($exists) {
 } else {
   Exec "git switch -c $Branch"
 }
+
 # --- SECRET GUARDRAIL (hard fail) ---
 # 1) Block committing .env files
 $changedEnv = (& git status --porcelain) | Select-String -Pattern '\.env' -SimpleMatch
@@ -70,7 +99,7 @@ if ($changedEnv) {
   throw "Refusing to ship: .env changes detected. Put secrets into .env (ignored) and commit only .env.example."
 }
 
-# 2) Scan staged diff for common secret patterns (best-effort)
+# 2) Scan diff for common secret patterns (best-effort)
 # NOTE: This is not perfect, but catches most accidents.
 $secretPatterns = @(
   'AKIA[0-9A-Z]{16}',                 # AWS Access Key
@@ -88,15 +117,20 @@ foreach ($p in $secretPatterns) {
     throw "Refusing to ship: possible secret detected in git diff (pattern: $p). Remove it before shipping."
   }
 }
+
 # --- AUTO CHECKS (best-effort) ---
 # If package managers exist, run common checks. Failures stop shipping.
 if (Test-Path "package.json") {
+  # === QUALITY GATES (pre-checks) ===
+  Require-NodeTestScript
+
   # install deps only if node_modules missing
   if (!(Test-Path "node_modules")) { Exec "npm install" }
-  # prefer test if exists
+
+  # run tests (now required by gate)
   $t = TryExec "npm test"
   if ($t.Code -ne 0) {
-    # some projects have no tests; try build/lint before failing
+    # fallback build (some projects use build as primary check)
     $b = TryExec "npm run build"
     if ($b.Code -ne 0) { throw "npm test and npm run build failed. Aborting ship." }
   }
