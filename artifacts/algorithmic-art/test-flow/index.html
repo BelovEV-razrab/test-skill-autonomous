@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Field Dynamics</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+  <style>
+    :root {
+      --bg: #f2eee6;
+      --panel: #e8dfcf;
+      --ink: #1f2529;
+      --muted: #5a666d;
+      --accent: #9c6f3f;
+      --line: #cdbda4;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      background:
+        radial-gradient(1100px 700px at 85% 10%, #efe5d0 0%, transparent 65%),
+        linear-gradient(180deg, #f4f0e8 0%, #ece4d6 100%);
+      color: var(--ink);
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(260px, 320px) 1fr;
+      gap: 20px;
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 18px;
+    }
+    .panel {
+      background: color-mix(in srgb, var(--panel) 82%, white 18%);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 8px 30px rgba(28, 34, 36, 0.12);
+      align-self: start;
+      position: sticky;
+      top: 14px;
+    }
+    h1 {
+      margin: 0 0 6px;
+      font-size: 1.1rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .sub {
+      margin: 0 0 14px;
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+    .seed-line {
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+    .controls, .actions {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .triple {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+    .jump-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+    }
+    .param {
+      display: grid;
+      gap: 4px;
+      margin-bottom: 8px;
+    }
+    .param label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.86rem;
+      color: var(--muted);
+    }
+    input[type="range"] { width: 100%; accent-color: var(--accent); }
+    input[type="number"] {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      padding: 7px 8px;
+      background: #f8f4ec;
+      color: var(--ink);
+    }
+    button {
+      border: 1px solid #b99b76;
+      background: linear-gradient(180deg, #f4e6cf 0%, #ebd6b5 100%);
+      color: #2d2a25;
+      border-radius: 10px;
+      padding: 8px 9px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.86rem;
+    }
+    button:hover { filter: brightness(0.98); }
+    #canvas-wrap {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.22);
+      padding: 12px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.5), 0 8px 24px rgba(25,29,34,0.1);
+    }
+    #canvas-container canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      border-radius: 10px;
+    }
+    @media (max-width: 980px) {
+      .layout { grid-template-columns: 1fr; }
+      .panel { position: static; }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="panel">
+      <h1>Field Dynamics</h1>
+      <p class="sub">Flow field with restrained trail memory</p>
+      <div id="seedDisplay" class="seed-line">Seed: 1</div>
+
+      <div class="controls">
+        <div class="triple">
+          <button id="prevSeed">Prev</button>
+          <button id="nextSeed">Next</button>
+          <button id="randomSeed">Random</button>
+        </div>
+        <div class="jump-row">
+          <input id="seedInput" type="number" min="1" step="1" placeholder="Jump to seed" />
+          <button id="jumpSeed">Go</button>
+        </div>
+      </div>
+
+      <div id="paramControls"></div>
+
+      <div class="actions">
+        <button id="regenerate">Regenerate</button>
+        <button id="reset">Reset</button>
+        <button id="download">Download PNG</button>
+      </div>
+    </aside>
+
+    <main id="canvas-wrap">
+      <div id="canvas-container"></div>
+    </main>
+  </div>
+
+  <script>
+    let particles = [];
+    let seed = 11831;
+    let resetRequested = false;
+    let prevW = 0;
+    let prevH = 0;
+
+    const defaults = {
+      particleCount: 2200,
+      noiseScale: 0.0018,
+      stepSize: 1.3,
+      trailAlpha: 14,
+      curl: 0.95,
+      paletteShift: 0.2
+    };
+    const params = { ...defaults };
+
+    const paramMeta = {
+      particleCount: { min: 400, max: 5000, step: 50 },
+      noiseScale: { min: 0.0005, max: 0.0060, step: 0.0001 },
+      stepSize: { min: 0.4, max: 3.2, step: 0.1 },
+      trailAlpha: { min: 4, max: 40, step: 1 },
+      curl: { min: 0.0, max: 2.4, step: 0.01 },
+      paletteShift: { min: 0.0, max: 1.0, step: 0.01 }
+    };
+
+    function setup() {
+      const s = min(windowWidth - 80, windowHeight - 80, 980);
+      const side = max(420, s);
+      const cnv = createCanvas(side, side);
+      cnv.parent("canvas-container");
+      pixelDensity(1);
+      strokeWeight(0.7);
+      buildControls();
+      resetSystem();
+    }
+
+    function windowResized() {
+      const s = min(windowWidth - 80, windowHeight - 80, 980);
+      const side = max(420, s);
+      if (abs(side - width) > 4) {
+        resizeCanvas(side, side);
+        resetSystem();
+      }
+    }
+
+    function resetSystem() {
+      randomSeed(seed);
+      noiseSeed(seed);
+      particles.length = 0;
+      for (let i = 0; i < params.particleCount; i++) {
+        particles.push({
+          x: random(width),
+          y: random(height),
+          life: random(50, 220)
+        });
+      }
+      prevW = width;
+      prevH = height;
+      background(...getBackgroundColor());
+      updateSeedDisplay();
+      resetRequested = false;
+    }
+
+    function draw() {
+      if (resetRequested || prevW !== width || prevH !== height) {
+        resetSystem();
+      }
+
+      const bg = getBackgroundColor();
+      noStroke();
+      fill(bg[0], bg[1], bg[2], params.trailAlpha);
+      rect(0, 0, width, height);
+
+      strokeWeight(0.65);
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        const angle = flowAngle(p.x, p.y);
+        const vx = cos(angle) * params.stepSize;
+        const vy = sin(angle) * params.stepSize;
+
+        const nx = p.x + vx;
+        const ny = p.y + vy;
+
+        const c = getStrokeColor(p.x, p.y, angle);
+        stroke(c[0], c[1], c[2], 28);
+        line(p.x, p.y, nx, ny);
+
+        p.x = nx;
+        p.y = ny;
+        p.life -= 1;
+
+        if (p.x < -2 || p.x > width + 2 || p.y < -2 || p.y > height + 2 || p.life <= 0) {
+          p.x = random(width);
+          p.y = random(height);
+          p.life = random(60, 260);
+        }
+      }
+    }
+
+    function flowAngle(x, y) {
+      const ns = params.noiseScale;
+      const n = noise(x * ns, y * ns, 0.31);
+      const n2 = noise(x * ns * 1.7 + 13.1, y * ns * 1.7 - 5.2, 0.77);
+      const base = n * TWO_PI * 2.0;
+      const twist = (n2 - 0.5) * TWO_PI * params.curl;
+      return base + twist;
+    }
+
+    function getBackgroundColor() {
+      const h = (34 + params.paletteShift * 56) % 360;
+      return hslToRgb(h, 23, 93);
+    }
+
+    function getStrokeColor(x, y, a) {
+      const d = dist(x, y, width * 0.5, height * 0.5) / (width * 0.8);
+      const n = noise(x * 0.0016, y * 0.0016, 2.31);
+      const hue = (186 + params.paletteShift * 120 + d * 45 + n * 20) % 360;
+      const sat = 32 + n * 16;
+      const light = 25 + (1.0 - d) * 17 + sin(a) * 4;
+      return hslToRgb(hue, sat, light);
+    }
+
+    function hslToRgb(h, s, l) {
+      s /= 100;
+      l /= 100;
+      const c = (1 - abs(2 * l - 1)) * s;
+      const x = c * (1 - abs((h / 60) % 2 - 1));
+      const m = l - c / 2;
+      let r = 0, g = 0, b = 0;
+      if (h < 60) { r = c; g = x; b = 0; }
+      else if (h < 120) { r = x; g = c; b = 0; }
+      else if (h < 180) { r = 0; g = c; b = x; }
+      else if (h < 240) { r = 0; g = x; b = c; }
+      else if (h < 300) { r = x; g = 0; b = c; }
+      else { r = c; g = 0; b = x; }
+      return [
+        round((r + m) * 255),
+        round((g + m) * 255),
+        round((b + m) * 255)
+      ];
+    }
+
+    function updateSeedDisplay() {
+      document.getElementById("seedDisplay").textContent = "Seed: " + seed;
+    }
+
+    function buildControls() {
+      const holder = document.getElementById("paramControls");
+      holder.innerHTML = "";
+
+      Object.keys(paramMeta).forEach((key) => {
+        const meta = paramMeta[key];
+        const row = document.createElement("div");
+        row.className = "param";
+        const label = document.createElement("label");
+        const title = document.createElement("span");
+        title.textContent = key;
+        const value = document.createElement("span");
+        value.id = key + "Val";
+        value.textContent = formatValue(key, params[key]);
+        label.appendChild(title);
+        label.appendChild(value);
+
+        const input = document.createElement("input");
+        input.type = "range";
+        input.min = meta.min;
+        input.max = meta.max;
+        input.step = meta.step;
+        input.value = params[key];
+        input.addEventListener("input", (e) => {
+          params[key] = parseFloat(e.target.value);
+          if (key === "particleCount") params[key] = floor(params[key]);
+          document.getElementById(key + "Val").textContent = formatValue(key, params[key]);
+          if (key === "particleCount") resetRequested = true;
+        });
+
+        row.appendChild(label);
+        row.appendChild(input);
+        holder.appendChild(row);
+      });
+
+      document.getElementById("prevSeed").onclick = () => {
+        seed = max(1, seed - 1);
+        resetSystem();
+      };
+      document.getElementById("nextSeed").onclick = () => {
+        seed += 1;
+        resetSystem();
+      };
+      document.getElementById("randomSeed").onclick = () => {
+        seed = floor(random(1, 2147483646));
+        resetSystem();
+      };
+      document.getElementById("jumpSeed").onclick = () => {
+        const v = parseInt(document.getElementById("seedInput").value, 10);
+        if (Number.isFinite(v) && v > 0) {
+          seed = v;
+          resetSystem();
+        }
+      };
+      document.getElementById("regenerate").onclick = () => resetSystem();
+      document.getElementById("reset").onclick = () => {
+        Object.keys(defaults).forEach((k) => { params[k] = defaults[k]; });
+        buildControls();
+        resetSystem();
+      };
+      document.getElementById("download").onclick = () => {
+        saveCanvas("field-dynamics-seed-" + seed, "png");
+      };
+    }
+
+    function formatValue(key, v) {
+      if (key === "particleCount" || key === "trailAlpha") return String(round(v));
+      return Number(v).toFixed(3).replace(/0+$/, "").replace(/\.$/, "");
+    }
+  </script>
+</body>
+</html>
