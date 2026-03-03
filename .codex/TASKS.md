@@ -40,3 +40,5 @@ ProjectType: unknown
 - PR summary: what + why + how tested
 
 - [2026-03-03T19:36:27] SHIPPED: Test quality enforcement v1 (branch: feat/20260303-193608-test-quality-enforcement-v1)
+
+- [2026-03-03T19:51:54] SHIPPED: Enable Node quality gates v1.1 (test/lint/build/format) (branch: feat/20260303-195129-enable-node-quality-gates-v1-1-test-lint)

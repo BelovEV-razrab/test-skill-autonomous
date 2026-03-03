@@ -1,0 +1,6 @@
+# Normalize line endings in repo
+* text=auto
+
+# Ensure scripts stay consistent
+*.ps1 text eol=lf
+*.md  text eol=lf
