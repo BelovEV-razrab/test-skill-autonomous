@@ -1,75 +1,141 @@
 param(
   [Parameter(Mandatory=$true)][string]$Message,
-  [Parameter(Mandatory=$false)][string]$Branch = ""
+  [Parameter(Mandatory=$false)][string]$Branch = "",
+  [Parameter(Mandatory=$false)][string]$Base = ""   # optional override (main/master)
 )
 
 $ErrorActionPreference = "Stop"
 
-function Exec($cmd) {
+function Exec([string]$cmd) {
   Write-Host "`n> $cmd" -ForegroundColor Cyan
-  iex $cmd
+  $out = & powershell -NoProfile -Command $cmd 2>&1
+  $code = $LASTEXITCODE
+  if ($code -ne 0) {
+    throw "Command failed ($code): $cmd`n$out"
+  }
+  return $out
 }
 
-# Ensure git repo
-Exec "git rev-parse --is-inside-work-tree | Out-Null"
+function TryExec([string]$cmd) {
+  Write-Host "`n> $cmd" -ForegroundColor DarkCyan
+  $out = & powershell -NoProfile -Command $cmd 2>&1
+  return @{ Out = $out; Code = $LASTEXITCODE }
+}
+
+function FileAppend([string]$path, [string]$text) {
+  if (!(Test-Path $path)) { New-Item $path -ItemType File | Out-Null }
+  Add-Content -Path $path -Value $text
+}
+
+# Ensure in git repo
+Exec "git rev-parse --is-inside-work-tree"
 
 # Ensure gh auth
-Exec "gh auth status | Out-Null"
+Exec "gh auth status"
 
-# Determine current branch
-$currentBranch = (git branch --show-current).Trim()
-if ([string]::IsNullOrWhiteSpace($currentBranch)) { $currentBranch = "master" }
-
-# Create/switch branch if requested
-if (-not [string]::IsNullOrWhiteSpace($Branch)) {
-  $exists = (git branch --list $Branch).Length -gt 0
-  if ($exists) {
-    Exec "git switch $Branch"
-  } else {
-    Exec "git switch -c $Branch"
-  }
-  $currentBranch = $Branch
+# Ensure codex memory files exist
+if (!(Test-Path ".codex")) { New-Item ".codex" -ItemType Directory | Out-Null }
+$ctx = ".codex/CONTEXT.md"
+$rules = ".codex/RULES.md"
+$skills = ".codex/SKILLS.md"
+$tasks = ".codex/TASKS.md"
+$decisions = ".codex/DECISIONS.md"
+foreach ($p in @($ctx,$rules,$skills,$tasks,$decisions)) {
+  if (!(Test-Path $p)) { New-Item $p -ItemType File | Out-Null }
 }
 
-# Show status
-Exec "git status"
+# Detect default/base branch
+$defaultBranch = (Exec "gh repo view --json defaultBranchRef --jq .defaultBranchRef.name").Trim()
+if ([string]::IsNullOrWhiteSpace($Base)) { $Base = $defaultBranch }
 
-# Add all changes
+# Determine branch: if not provided, create deterministic branch name
+if ([string]::IsNullOrWhiteSpace($Branch)) {
+  $ts = Get-Date -Format "yyyyMMdd-HHmmss"
+  $safe = ($Message.ToLower() -replace '[^a-z0-9]+','-').Trim('-')
+  if ($safe.Length -gt 40) { $safe = $safe.Substring(0,40) }
+  $Branch = "feat/$ts-$safe"
+}
+
+# Switch/create branch
+$exists = (TryExec "git show-ref --verify --quiet refs/heads/$Branch").Code -eq 0
+if ($exists) {
+  Exec "git switch $Branch"
+} else {
+  Exec "git switch -c $Branch"
+}
+
+# --- AUTO CHECKS (best-effort) ---
+# If package managers exist, run common checks. Failures stop shipping.
+if (Test-Path "package.json") {
+  # install deps only if node_modules missing
+  if (!(Test-Path "node_modules")) { Exec "npm install" }
+  # prefer test if exists
+  $t = TryExec "npm test"
+  if ($t.Code -ne 0) {
+    # some projects have no tests; try build/lint before failing
+    $b = TryExec "npm run build"
+    if ($b.Code -ne 0) { throw "npm test and npm run build failed. Aborting ship." }
+  }
+}
+elseif (Test-Path "pubspec.yaml") {
+  Exec "flutter pub get"
+  $t = TryExec "flutter test"
+  if ($t.Code -ne 0) {
+    # try analyze
+    $a = TryExec "flutter analyze"
+    if ($a.Code -ne 0) { throw "flutter test/analyze failed. Aborting ship." }
+  }
+}
+elseif ((Test-Path "pyproject.toml") -or (Test-Path "requirements.txt")) {
+  # You can add project-specific checks here later.
+  Write-Host "`nPython project detected (no automatic venv actions by default)." -ForegroundColor Yellow
+}
+
+# Stage & commit
 Exec "git add -A"
-
-# If nothing to commit, exit
-$status = (git status --porcelain)
+$status = (Exec "git status --porcelain").Trim()
 if ([string]::IsNullOrWhiteSpace($status)) {
   Write-Host "`nNo changes to commit. Exiting." -ForegroundColor Yellow
   exit 0
 }
 
-# Commit
 Exec "git commit -m `"$Message`""
 
-# Push (set upstream if needed)
-try {
+# Push (autoSetupRemote=true already enabled globally)
+Exec "git push"
+
+# Update memory files (append)
+$now = (Get-Date).ToString("s")
+FileAppend $tasks "`n- [$now] SHIPPED: $Message (branch: $Branch)"
+FileAppend $decisions "`n- [$now] Ship decision: $Message (branch: $Branch)"
+
+Exec "git add -A"
+# commit memory updates separately (keeps history clean)
+$memStatus = (Exec "git status --porcelain").Trim()
+if (-not [string]::IsNullOrWhiteSpace($memStatus)) {
+  Exec "git commit -m `"Update Codex memory after ship`""
   Exec "git push"
-} catch {
-  Exec "git push -u origin $currentBranch"
 }
 
-# Create PR (only if not default branch)
-$defaultBranch = (gh repo view --json defaultBranchRef --jq .defaultBranchRef.name).Trim()
-if ($currentBranch -ne $defaultBranch) {
-  # If PR already exists, do nothing
-  $existing = ""
-  try {
-    $existing = (gh pr view --json number --jq .number) 2>$null
-  } catch { }
-
-  if ([string]::IsNullOrWhiteSpace($existing)) {
-    Exec "gh pr create --fill"
-    Exec "gh pr view --web"
-  } else {
-    Write-Host "`nPR already exists for this branch (#$existing). Opening..." -ForegroundColor Green
-    Exec "gh pr view --web"
-  }
-} else {
-  Write-Host "`nOn default branch '$defaultBranch' — PR not created." -ForegroundColor Yellow
+# --- PR CREATION (robust) ---
+# First try gh pr create (may fail on some networks)
+$pr = TryExec "gh pr create --fill --base $Base --head $Branch"
+if ($pr.Code -eq 0) {
+  Write-Host "`nPR created via gh." -ForegroundColor Green
+  TryExec "gh pr view --web" | Out-Null
+  exit 0
 }
+
+Write-Host "`nWARN: gh pr create failed. Falling back to web URL method." -ForegroundColor Yellow
+
+# Build compare URL (always works)
+$repoFull = (Exec "gh repo view --json nameWithOwner --jq .nameWithOwner").Trim()
+$encodedHead = [System.Uri]::EscapeDataString($Branch)
+$encodedBase = [System.Uri]::EscapeDataString($Base)
+$url = "https://github.com/$repoFull/compare/$encodedBase...$encodedHead?expand=1"
+
+Write-Host "`nOpen this URL to create PR:" -ForegroundColor Green
+Write-Host $url
+
+# Try open browser automatically
+TryExec "start `"$url`"" | Out-Null
