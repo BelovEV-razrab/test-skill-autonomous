@@ -1,1 +1,2 @@
 - Test ship flow
+- [2026-03-03T18:27:06] SHIPPED: Enable fully autonomous ship flow (branch: feat/20260303-182651-enable-fully-autonomous-ship-flow)
