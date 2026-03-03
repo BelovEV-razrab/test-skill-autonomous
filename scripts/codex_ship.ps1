@@ -63,7 +63,31 @@ if ($exists) {
 } else {
   Exec "git switch -c $Branch"
 }
+# --- SECRET GUARDRAIL (hard fail) ---
+# 1) Block committing .env files
+$changedEnv = (& git status --porcelain) | Select-String -Pattern '\.env' -SimpleMatch
+if ($changedEnv) {
+  throw "Refusing to ship: .env changes detected. Put secrets into .env (ignored) and commit only .env.example."
+}
 
+# 2) Scan staged diff for common secret patterns (best-effort)
+# NOTE: This is not perfect, but catches most accidents.
+$secretPatterns = @(
+  'AKIA[0-9A-Z]{16}',                 # AWS Access Key
+  'ghp_[A-Za-z0-9_]{20,}',            # GitHub PAT (classic)
+  'github_pat_[A-Za-z0-9_]{20,}',     # GitHub fine-grained
+  'sk-[A-Za-z0-9]{20,}',              # OpenAI-like keys
+  '-----BEGIN (RSA|EC|OPENSSH) PRIVATE KEY-----',
+  'xox[baprs]-[A-Za-z0-9-]{10,}',     # Slack tokens
+  'AIza[0-9A-Za-z\-_]{35}'            # Google API key
+)
+
+$diffText = (& git diff) -join "`n"
+foreach ($p in $secretPatterns) {
+  if ($diffText -match $p) {
+    throw "Refusing to ship: possible secret detected in git diff (pattern: $p). Remove it before shipping."
+  }
+}
 # --- AUTO CHECKS (best-effort) ---
 # If package managers exist, run common checks. Failures stop shipping.
 if (Test-Path "package.json") {
