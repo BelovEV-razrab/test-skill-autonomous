@@ -48,3 +48,5 @@ ProjectType: unknown
 - [2026-03-04T09:42:31] SHIPPED: Add CI baseline (GitHub Actions) (branch: feat/20260304-094211-add-ci-baseline-github-actions)
 
 - [2026-03-04T09:53:26] SHIPPED: Fix CI conditional lint/build logic (branch: feat/20260304-095307-fix-ci-conditional-lint-build-logic)
+
+- [2026-03-04T14:24:48] SHIPPED: Add PR template, issue templates and CODEOWNERS (branch: feat/20260304-142427-add-pr-template-issue-templates-and-code)
