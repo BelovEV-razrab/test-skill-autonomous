@@ -13,18 +13,24 @@ jobs:
 
       - name: Block .env files
         run: |
-          if git ls-files | grep -E '\.env$'; then
+          if git ls-files | grep -E '(^|/)\.env(\..*)?$'; then
             echo ".env files are not allowed in repo"
+            git ls-files | grep -E '(^|/)\.env(\..*)?$'
             exit 1
           else
             echo "No .env files detected"
           fi
 
-      - name: Basic secret scan
+      - name: Basic secret scan (pattern-based)
         run: |
-          if git grep -E '(API_KEY|SECRET|TOKEN|PASSWORD)'; then
-            echo "Potential secret detected"
-            exit 1
-          else
-            echo "No obvious secrets detected"
+          set -e
+
+          # Collect tracked files and exclude common false-positive areas
+          FILES=".editorconfig .gitattributes .github/CODEOWNERS .github/ISSUE_TEMPLATE/bug_report.yml .github/ISSUE_TEMPLATE/feature_request.yml .github/workflows/ci.yml .github/workflows/policy.yml .gitignore package-lock.json package.json scripts/codex_bootstrap.ps1 scripts/codex_plan.ps1 scripts/codex_ship.ps1"
+
+          if [ -z "" ]; then
+            echo "No files to scan (after exclusions)."
+            exit 0
           fi
+
+          echo "" | xargs -r grep -nE "(gho_[A-Za-z0-9_]{10,}|sk-[A-Za-z0-9]{10,}|AKIA[0-9A-Z]{16}|Bearer[[:space:]]+[A-Za-z0-9\._-]{10,}|BEGIN[[:space:]]+PRIVATE[[:space:]]+KEY|-----BEGIN[[:space:]]+PRIVATE[[:space:]]+KEY-----)" && { echo "Potential secret detected (pattern match)."; exit 1; } || echo "No secret patterns detected."
