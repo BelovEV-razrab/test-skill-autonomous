@@ -12,3 +12,5 @@
 - [2026-03-04T09:53:26] Ship decision: Fix CI conditional lint/build logic (branch: feat/20260304-095307-fix-ci-conditional-lint-build-logic)
 
 - [2026-03-04T14:24:48] Ship decision: Add PR template, issue templates and CODEOWNERS (branch: feat/20260304-142427-add-pr-template-issue-templates-and-code)
+
+- [2026-03-04T14:34:03] Ship decision: Add CI policy checks: block .env and basic secret scan (branch: feat/20260304-143345-add-ci-policy-checks-block-env-and-basic)
