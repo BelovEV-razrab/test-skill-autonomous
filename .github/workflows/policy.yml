@@ -13,9 +13,9 @@ jobs:
 
       - name: Block .env files
         run: |
-          if git ls-files | grep -E '(^|/)\.env(\..*)?; then
+          if git ls-files | grep ".env"; then
             echo ".env files are not allowed in repo"
-            git ls-files | grep -E '(^|/)\.env(\..*)?
+            git ls-files | grep ".env"
             exit 1
           else
             echo "No .env files detected"

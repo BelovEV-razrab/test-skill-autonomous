@@ -6,12 +6,15 @@ param(
 Write-Host "Generating project tree snapshot..."
 
 # Build tree (exclude .git and node_modules)
-$tree = Get-ChildItem -Recurse -Force | Where-Object {
-  $_.FullName -notmatch '\\\.git(\\|$)' -and
-  $_.FullName -notmatch 'node_modules(\\|$)'
-} | ForEach-Object {
-  $rel = $_.FullName.Replace((Get-Location).Path + '\', '')
-  if ($_.PSIsContainer) { "[DIR]  $rel" } else { "[FILE] $rel" }
+$items = Get-ChildItem -Recurse -Force -ErrorAction SilentlyContinue |
+Where-Object {
+    $_.FullName -notmatch '\\\.git\\' -and
+    $_.FullName -notmatch 'node_modules'
+}
+
+$tree = $items | ForEach-Object {
+    $rel = $_.FullName.Replace((Get-Location).Path + '\', '')
+    if ($_.PSIsContainer) { "[DIR]  $rel" } else { "[FILE] $rel" }
 }
 
 $treeText = $tree -join "`n"
