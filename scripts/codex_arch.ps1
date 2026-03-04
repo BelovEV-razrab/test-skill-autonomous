@@ -8,12 +8,13 @@ Write-Host "Generating project tree snapshot..."
 # Build tree (exclude .git and node_modules)
 $items = Get-ChildItem -Recurse -Force -ErrorAction SilentlyContinue |
 Where-Object {
-    $_.FullName -notmatch '\\\.git\\' -and
+    $_.FullName -notmatch '\.git' -and
     $_.FullName -notmatch 'node_modules'
 }
 
 $tree = $items | ForEach-Object {
     $rel = $_.FullName.Replace((Get-Location).Path + '\', '')
+    $rel = $rel.Replace((Get-Location).Path + '/', '')
     if ($_.PSIsContainer) { "[DIR]  $rel" } else { "[FILE] $rel" }
 }
 
