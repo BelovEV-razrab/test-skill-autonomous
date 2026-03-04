@@ -35,7 +35,6 @@ PLAN → IMPLEMENT → TEST → SHIP → PR → CI → MERGE
 ## Snapshot
 
     [DIR]  .codex
-    [DIR]  .git
     [DIR]  .github
     [DIR]  docs
     [DIR]  scripts
