@@ -6,3 +6,5 @@
 - [2026-03-03T19:51:54] Ship decision: Enable Node quality gates v1.1 (test/lint/build/format) (branch: feat/20260303-195129-enable-node-quality-gates-v1-1-test-lint)
 
 - [2026-03-04T09:35:07] Ship decision: Fix Node gate order + normalize line endings (branch: feat/20260304-093441-fix-node-gate-order-normalize-line-endin)
+
+- [2026-03-04T09:42:31] Ship decision: Add CI baseline (GitHub Actions) (branch: feat/20260304-094211-add-ci-baseline-github-actions)
