@@ -35,32 +35,20 @@ PLAN → IMPLEMENT → TEST → SHIP → PR → CI → MERGE
 ## Snapshot
 
     [DIR]  .codex
-    [DIR]  .git
-    [DIR]  .github
-    [DIR]  docs
-    [DIR]  scripts
+    [FILE] .codex/ARCHITECTURE.md
+    [FILE] .codex/CONTEXT.md
+    [FILE] .codex/DECISIONS.md
+    [FILE] .codex/ENGINEERING_PROTOCOL.md
+    [FILE] .codex/RULES.md
+    [FILE] .codex/SKILLS.md
+    [FILE] .codex/TASKS.md
     [FILE] .editorconfig
-    [FILE] .gitattributes
-    [FILE] .gitignore
+    [DIR]  docs
+    [FILE] docs/DECISION_GLOBAL_SKILLS.md
     [FILE] package-lock.json
     [FILE] package.json
-    [FILE] .codex\ARCHITECTURE.md
-    [FILE] .codex\CONTEXT.md
-    [FILE] .codex\DECISIONS.md
-    [FILE] .codex\ENGINEERING_PROTOCOL.md
-    [FILE] .codex\RULES.md
-    [FILE] .codex\SKILLS.md
-    [FILE] .codex\TASKS.md
-    [DIR]  .github\ISSUE_TEMPLATE
-    [DIR]  .github\workflows
-    [FILE] .github\CODEOWNERS
-    [FILE] .github\PULL_REQUEST_TEMPLATE.md
-    [FILE] .github\ISSUE_TEMPLATE\bug_report.yml
-    [FILE] .github\ISSUE_TEMPLATE\feature_request.yml
-    [FILE] .github\workflows\ci.yml
-    [FILE] .github\workflows\policy.yml
-    [FILE] docs\DECISION_GLOBAL_SKILLS.md
-    [FILE] scripts\codex_arch.ps1
-    [FILE] scripts\codex_bootstrap.ps1
-    [FILE] scripts\codex_plan.ps1
-    [FILE] scripts\codex_ship.ps1
+    [DIR]  scripts
+    [FILE] scripts/codex_arch.ps1
+    [FILE] scripts/codex_bootstrap.ps1
+    [FILE] scripts/codex_plan.ps1
+    [FILE] scripts/codex_ship.ps1
