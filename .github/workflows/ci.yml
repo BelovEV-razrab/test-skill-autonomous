@@ -3,18 +3,16 @@ name: CI
 on:
   pull_request:
   push:
-    branches: [ "master", "main" ]
+    branches: ["master", "main"]
 
 jobs:
   node:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: "20"
           cache: "npm"
@@ -27,26 +25,24 @@ jobs:
 
       - name: Lint (if exists)
         run: |
-          node -e "const p=require('./package.json'); process.exit(p.scripts && p.scripts.lint ? 0 : 1)"
-        continue-on-error: true
-
-      - name: Run Lint (only if exists)
-        run: npm run lint
-        if: ${{ success() }}
+          if node -e "const p=require('./package.json'); process.exit(p.scripts && p.scripts.lint ? 0 : 1)"; then
+            npm run lint
+          else
+            echo "No lint script, skipping."
+          fi
 
       - name: Build (if exists)
         run: |
-          node -e "const p=require('./package.json'); process.exit(p.scripts && p.scripts.build ? 0 : 1)"
-        continue-on-error: true
-
-      - name: Run Build (only if exists)
-        run: npm run build
-        if: ${{ success() }}
-
-      - name: Prettier check (if present)
-        run: |
-          if [ -f .prettierrc ] || [ -f .prettierrc.json ] || [ -f .prettierrc.yml ] || [ -f .prettierrc.yaml ] || [ -f .prettierrc.js ] || [ -f .prettierrc.cjs ] || [ -f prettier.config.js ] || [ -f prettier.config.cjs ]; then
-            npx prettier --check .
-            exit 0
+          if node -e "const p=require('./package.json'); process.exit(p.scripts && p.scripts.build ? 0 : 1)"; then
+            npm run build
+          else
+            echo "No build script, skipping."
           fi
-          node -e "const p=require('./package.json'); const d=p.devDependencies||{}; const deps=p.dependencies||{}; process.exit((d.prettier||deps.prettier)?0:1)" && npx prettier --check . || echo "Prettier not configured, skipping."
+
+      - name: Prettier check (if exists)
+        run: |
+          if node -e "const p=require('./package.json'); process.exit(p.devDependencies?.prettier || p.dependencies?.prettier ? 0 : 1)"; then
+            npx prettier --check .
+          else
+            echo "No prettier, skipping."
+          fi
