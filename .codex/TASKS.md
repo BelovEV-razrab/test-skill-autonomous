@@ -2,6 +2,14 @@
 - [2026-03-03T18:27:06] SHIPPED: Enable fully autonomous ship flow (branch: feat/20260303-182651-enable-fully-autonomous-ship-flow)
 ---
 
+## NEXT (Autonomous)
+
+- [ ] B1: Add task runner script `scripts/codex_run.ps1` that:
+      1) reads next unchecked task from `.codex/TASKS.md`
+      2) prints it clearly
+      3) writes it into `.codex/CONTEXT.md` under "Current Task"
+      4) exits with code 0
+
 ## PLAN — Добавить в ship flow обязательный pre-check: если есть package.json и не…
 Date: 2026-03-03 19:18:59
 ProjectType: unknown
