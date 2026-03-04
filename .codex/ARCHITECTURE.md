@@ -35,11 +35,6 @@ PLAN → IMPLEMENT → TEST → SHIP → PR → CI → MERGE
 ## Snapshot
 
     [DIR]  .codex
-    [DIR]  docs
-    [DIR]  scripts
-    [FILE] .editorconfig
-    [FILE] package-lock.json
-    [FILE] package.json
     [FILE] .codex/ARCHITECTURE.md
     [FILE] .codex/CONTEXT.md
     [FILE] .codex/DECISIONS.md
@@ -47,7 +42,12 @@ PLAN → IMPLEMENT → TEST → SHIP → PR → CI → MERGE
     [FILE] .codex/RULES.md
     [FILE] .codex/SKILLS.md
     [FILE] .codex/TASKS.md
+    [FILE] .editorconfig
+    [DIR]  docs
     [FILE] docs/DECISION_GLOBAL_SKILLS.md
+    [FILE] package-lock.json
+    [FILE] package.json
+    [DIR]  scripts
     [FILE] scripts/codex_arch.ps1
     [FILE] scripts/codex_bootstrap.ps1
     [FILE] scripts/codex_plan.ps1

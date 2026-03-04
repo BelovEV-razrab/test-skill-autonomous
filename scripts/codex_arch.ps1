@@ -13,9 +13,14 @@ Where-Object {
 }
 
 $tree = $items | ForEach-Object {
-    $rel = $_.FullName.Substring((Get-Location).Path.Length).TrimStart('\','/')
-    $rel = $rel -replace '\\','/'   # <- нормализуем на /
-    if ($_.PSIsContainer) { "[DIR]  $rel" } else { "[FILE] $rel" }
+  $rel = $_.FullName.Substring((Get-Location).Path.Length).TrimStart('\','/')
+  $rel = $rel -replace '\\','/'
+  [PSCustomObject]@{
+    Rel = $rel
+    IsDir = $_.PSIsContainer
+  }
+} | Sort-Object Rel | ForEach-Object {
+  if ($_.IsDir) { "[DIR]  $($_.Rel)" } else { "[FILE] $($_.Rel)" }
 }
 
 $treeText = $tree -join "`n"
