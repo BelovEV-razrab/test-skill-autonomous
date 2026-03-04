@@ -42,3 +42,5 @@ ProjectType: unknown
 - [2026-03-03T19:36:27] SHIPPED: Test quality enforcement v1 (branch: feat/20260303-193608-test-quality-enforcement-v1)
 
 - [2026-03-03T19:51:54] SHIPPED: Enable Node quality gates v1.1 (test/lint/build/format) (branch: feat/20260303-195129-enable-node-quality-gates-v1-1-test-lint)
+
+- [2026-03-04T09:35:07] SHIPPED: Fix Node gate order + normalize line endings (branch: feat/20260304-093441-fix-node-gate-order-normalize-line-endin)
