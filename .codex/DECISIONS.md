@@ -8,3 +8,5 @@
 - [2026-03-04T09:35:07] Ship decision: Fix Node gate order + normalize line endings (branch: feat/20260304-093441-fix-node-gate-order-normalize-line-endin)
 
 - [2026-03-04T09:42:31] Ship decision: Add CI baseline (GitHub Actions) (branch: feat/20260304-094211-add-ci-baseline-github-actions)
+
+- [2026-03-04T09:53:26] Ship decision: Fix CI conditional lint/build logic (branch: feat/20260304-095307-fix-ci-conditional-lint-build-logic)

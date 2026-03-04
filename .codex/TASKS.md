@@ -46,3 +46,5 @@ ProjectType: unknown
 - [2026-03-04T09:35:07] SHIPPED: Fix Node gate order + normalize line endings (branch: feat/20260304-093441-fix-node-gate-order-normalize-line-endin)
 
 - [2026-03-04T09:42:31] SHIPPED: Add CI baseline (GitHub Actions) (branch: feat/20260304-094211-add-ci-baseline-github-actions)
+
+- [2026-03-04T09:53:26] SHIPPED: Fix CI conditional lint/build logic (branch: feat/20260304-095307-fix-ci-conditional-lint-build-logic)
