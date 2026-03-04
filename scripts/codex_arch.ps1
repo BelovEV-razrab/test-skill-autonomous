@@ -13,8 +13,8 @@ Where-Object {
 }
 
 $tree = $items | ForEach-Object {
-    $rel = $_.FullName.Replace((Get-Location).Path + '\', '')
-    $rel = $rel.Replace((Get-Location).Path + '/', '')
+    $rel = $_.FullName.Substring((Get-Location).Path.Length).TrimStart('\','/')
+    $rel = $rel -replace '\\','/'   # <- нормализуем на /
     if ($_.PSIsContainer) { "[DIR]  $rel" } else { "[FILE] $rel" }
 }
 

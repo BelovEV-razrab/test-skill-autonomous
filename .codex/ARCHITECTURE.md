@@ -40,15 +40,15 @@ PLAN → IMPLEMENT → TEST → SHIP → PR → CI → MERGE
     [FILE] .editorconfig
     [FILE] package-lock.json
     [FILE] package.json
-    [FILE] .codex\ARCHITECTURE.md
-    [FILE] .codex\CONTEXT.md
-    [FILE] .codex\DECISIONS.md
-    [FILE] .codex\ENGINEERING_PROTOCOL.md
-    [FILE] .codex\RULES.md
-    [FILE] .codex\SKILLS.md
-    [FILE] .codex\TASKS.md
-    [FILE] docs\DECISION_GLOBAL_SKILLS.md
-    [FILE] scripts\codex_arch.ps1
-    [FILE] scripts\codex_bootstrap.ps1
-    [FILE] scripts\codex_plan.ps1
-    [FILE] scripts\codex_ship.ps1
+    [FILE] .codex/ARCHITECTURE.md
+    [FILE] .codex/CONTEXT.md
+    [FILE] .codex/DECISIONS.md
+    [FILE] .codex/ENGINEERING_PROTOCOL.md
+    [FILE] .codex/RULES.md
+    [FILE] .codex/SKILLS.md
+    [FILE] .codex/TASKS.md
+    [FILE] docs/DECISION_GLOBAL_SKILLS.md
+    [FILE] scripts/codex_arch.ps1
+    [FILE] scripts/codex_bootstrap.ps1
+    [FILE] scripts/codex_plan.ps1
+    [FILE] scripts/codex_ship.ps1
