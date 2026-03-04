@@ -52,3 +52,5 @@ ProjectType: unknown
 - [2026-03-04T14:24:48] SHIPPED: Add PR template, issue templates and CODEOWNERS (branch: feat/20260304-142427-add-pr-template-issue-templates-and-code)
 
 - [2026-03-04T14:34:03] SHIPPED: Add CI policy checks: block .env and basic secret scan (branch: feat/20260304-143345-add-ci-policy-checks-block-env-and-basic)
+
+- [2026-03-04T14:40:59] SHIPPED: Fix policy workflow: reduce false positives and scan real secret patterns (branch: feat/20260304-144040-fix-policy-workflow-reduce-false-positiv)
