@@ -142,12 +142,12 @@ foreach ($p in $secretPatterns) {
 
 # --- AUTO CHECKS (best-effort) ---
 if (Test-Path "package.json") {
-  # === QUALITY GATES (pre-checks) ===
-  Require-NodeQualityGates
-
-  if (!(Test-Path "node_modules")) { Exec "npm install" }
-  Require-NodeQualityGates
-}
+    # Ensure deps first
+    Exec "npm install"
+  
+    # === QUALITY GATES (pre-ship) ===
+    Require-NodeQualityGates
+  }
 elseif (Test-Path "pubspec.yaml") {
   Exec "flutter pub get"
   $t = TryExec "flutter test"

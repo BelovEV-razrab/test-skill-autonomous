@@ -1,6 +1,11 @@
-# Normalize line endings in repo
+# Auto-normalize text files
 * text=auto
 
-# Ensure scripts stay consistent
+# Force LF in repo for these filetypes
 *.ps1 text eol=lf
 *.md  text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.json text eol=lf
+*.gitattributes text eol=lf
+*.editorconfig text eol=lf
