@@ -1,0 +1,10 @@
+# Default owners for everything in the repo
+* @BelovEV-razrab
+
+# Governance / automation
+/.github/ @BelovEV-razrab
+/.codex/  @BelovEV-razrab
+/scripts/ @BelovEV-razrab
+
+# Docs
+/docs/    @BelovEV-razrab

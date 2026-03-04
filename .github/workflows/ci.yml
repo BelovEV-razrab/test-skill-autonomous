@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: ["master", "main"]
+
+jobs:
+  node:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install
+        run: npm ci
+
+      - name: Test
+        run: npm test
+
+      - name: Lint (if exists)
+        run: |
+          if node -e "const p=require('./package.json'); process.exit(p.scripts && p.scripts.lint ? 0 : 1)"; then
+            npm run lint
+          else
+            echo "No lint script, skipping."
+          fi
+
+      - name: Build (if exists)
+        run: |
+          if node -e "const p=require('./package.json'); process.exit(p.scripts && p.scripts.build ? 0 : 1)"; then
+            npm run build
+          else
+            echo "No build script, skipping."
+          fi
+
+      - name: Prettier check (if exists)
+        run: |
+          if node -e "const p=require('./package.json'); process.exit(p.devDependencies?.prettier || p.dependencies?.prettier ? 0 : 1)"; then
+            npx prettier --check .
+          else
+            echo "No prettier, skipping."
+          fi
